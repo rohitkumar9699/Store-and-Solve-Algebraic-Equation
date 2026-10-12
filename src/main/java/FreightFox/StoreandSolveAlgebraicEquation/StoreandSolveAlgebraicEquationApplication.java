@@ -8,6 +8,7 @@ public class StoreandSolveAlgebraicEquationApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(StoreandSolveAlgebraicEquationApplication.class, args);
+		System.out.println("Application started");
 	}
 
 }
