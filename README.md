@@ -60,4 +60,8 @@ Supports `+`, `-`, `^`, parentheses, integer constants, variables, unary minus, 
 
 ## Deployment
 
-The application is ready to deploy as a Spring Boot service. A live deployment URL must be supplied by the deployment environment; this repository does not provision hosting.
+### Vercel
+
+Vercel deploys this Spring Boot application with its Container Runtime using the root-level `Dockerfile.vercel` file. Import this repository into Vercel (or deploy it with the Vercel CLI); Vercel detects the file, builds the container, and routes incoming requests to the application. Spring Boot listens on Vercel's assigned `PORT`, falling back to port `8080` for local development.
+
+The API stores equations in memory, so data is not durable across restarts and may not be shared between different serverless instances. Use persistent storage if deployed data must survive restarts or be shared consistently.
