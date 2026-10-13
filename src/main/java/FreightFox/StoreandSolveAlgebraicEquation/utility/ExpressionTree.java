@@ -12,19 +12,40 @@ public final class ExpressionTree {
 		this.root = root;
 	}
 
-	static ExpressionTree fromRoot(ExpressionNode root) {
-		return new ExpressionTree(root);
+	static ExpressionTree fromPostfix(Iterable<String> postfix) {
+		Deque<ExpressionNode> nodes = new ArrayDeque<>();
+		for (String token : postfix) {
+			if (token.equals("u-")) {
+				if (nodes.isEmpty()) {
+					throw new IllegalArgumentException("Invalid equation syntax.");
+				}
+				nodes.push(new ExpressionNode(token, nodes.pop(), null));
+			} else if (isBinaryOperator(token)) {
+				if (nodes.size() < 2) {
+					throw new IllegalArgumentException("Invalid equation syntax.");
+				}
+				ExpressionNode right = nodes.pop();
+				ExpressionNode left = nodes.pop();
+				nodes.push(new ExpressionNode(token, left, right));
+			} else {
+				nodes.push(new ExpressionNode(token, null, null));
+			}
+		}
+		if (nodes.size() != 1) {
+			throw new IllegalArgumentException("Invalid equation syntax.");
+		}
+		return new ExpressionTree(nodes.pop());
 	}
 
 	public String toInfix() {
-		return format(root, 0, false);
+		return format(root, null, false);
 	}
 
 	public double evaluate(Map<String, Double> variables) {
 		return evaluate(root, variables);
 	}
 
-	private static String format(ExpressionNode node, int parentPrecedence, boolean rightChild) {
+	private static String format(ExpressionNode node, String parentOperator, boolean rightChild) {
 		if (node.isLeaf()) {
 			return node.token();
 		}
@@ -32,22 +53,32 @@ public final class ExpressionTree {
 		int precedence = precedence(node.token());
 		String expression;
 		if (isUnaryOperator(node.token())) {
-			expression = node.token().substring(1) + format(node.left(), precedence, false);
+			expression = "-" + format(node.left(), node.token(), false);
 		} else {
-			String left = format(node.left(), precedence, false);
-			String right = format(node.right(), precedence, true);
+			String left = format(node.left(), node.token(), false);
+			String right = format(node.right(), node.token(), true);
 			expression = left + " " + node.token() + " " + right;
 		}
 
-		boolean needsParentheses = precedence < parentPrecedence;
-		if (rightChild && precedence == parentPrecedence
-				&& (node.token().equals("-") || node.token().equals("^"))) {
-			needsParentheses = true;
-		}
-		if (!rightChild && node.token().equals("^") && precedence == parentPrecedence) {
-			needsParentheses = true;
-		}
+		int parentPrecedence = parentOperator == null ? 0 : precedence(parentOperator);
+		boolean needsParentheses = precedence < parentPrecedence
+				|| precedence == parentPrecedence && needsEqualPrecedenceParentheses(parentOperator, node.token(), rightChild);
 		return needsParentheses ? "(" + expression + ")" : expression;
+	}
+
+	private static boolean needsEqualPrecedenceParentheses(String parent, String child, boolean rightChild) {
+		if (parent == null) {
+			return false;
+		}
+		if (parent.equals("^")) {
+			return !rightChild;
+		}
+		if (!rightChild) {
+			return false;
+		}
+		return parent.equals("-") || parent.equals("/")
+				|| parent.equals("+") && child.equals("-")
+				|| parent.equals("*") && child.equals("/");
 	}
 
 	private static double evaluate(ExpressionNode node, Map<String, Double> variables) {
@@ -74,6 +105,7 @@ public final class ExpressionTree {
 			case "+" -> left + right;
 			case "-" -> left - right;
 			case "*" -> left * right;
+			case "/" -> left / right;
 			case "^" -> Math.pow(left, right);
 			default -> throw new IllegalArgumentException("Unsupported operator '" + node.token() + "'.");
 		};
@@ -83,10 +115,14 @@ public final class ExpressionTree {
 		return token.equals("u-");
 	}
 
+	private static boolean isBinaryOperator(String token) {
+		return "+-*/^".contains(token);
+	}
+
 	private static int precedence(String operator) {
 		return switch (operator) {
 			case "+", "-" -> 1;
-			case "*" -> 2;
+			case "*", "/" -> 2;
 			case "u-" -> 3;
 			case "^" -> 4;
 			default -> 5;

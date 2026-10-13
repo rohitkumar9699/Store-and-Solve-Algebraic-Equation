@@ -23,7 +23,9 @@ public final class EquationParser {
 		if (parser.position != parser.tokens.size()) {
 			throw parser.syntaxError();
 		}
-		return ExpressionTree.fromRoot(root);
+		List<String> postfix = new ArrayList<>();
+		toPostfix(root, postfix);
+		return ExpressionTree.fromPostfix(postfix);
 	}
 
 	private ExpressionNode parseExpression() {
@@ -37,7 +39,7 @@ public final class EquationParser {
 
 	private ExpressionNode parseTerm() {
 		ExpressionNode expression = parseUnary();
-		while (match("*")) {
+		while (match("*") || match("/")) {
 			String operator = previous();
 			expression = new ExpressionNode(operator, expression, parseUnary());
 		}
@@ -94,6 +96,16 @@ public final class EquationParser {
 				+ (position < tokens.size() ? "'" + tokens.get(position) + "'" : "at end") + ".");
 	}
 
+	private static void toPostfix(ExpressionNode node, List<String> postfix) {
+		if (!node.isLeaf()) {
+			toPostfix(node.left(), postfix);
+			if (node.right() != null) {
+				toPostfix(node.right(), postfix);
+			}
+		}
+		postfix.add(node.token());
+	}
+
 	private static List<String> tokenize(String equation) {
 		List<String> rawTokens = new ArrayList<>();
 		for (int i = 0; i < equation.length();) {
@@ -123,11 +135,9 @@ public final class EquationParser {
 					i++;
 				}
 				rawTokens.add(equation.substring(start, i));
-			} else if ("+-^()".indexOf(current) >= 0) {
+			} else if ("+-*/^()".indexOf(current) >= 0) {
 				rawTokens.add(String.valueOf(current));
 				i++;
-			} else if (current == '*' || current == '/') {
-				throw new IllegalArgumentException("Unsupported operator '" + current + "' in equation.");
 			} else {
 				throw new IllegalArgumentException("Unsupported character '" + current + "' in equation.");
 			}
@@ -167,6 +177,6 @@ public final class EquationParser {
 	}
 
 	private static boolean isOperator(String token) {
-		return "+-^".contains(token);
+		return "+-*/^".contains(token);
 	}
 }

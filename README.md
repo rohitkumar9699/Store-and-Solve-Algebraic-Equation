@@ -50,7 +50,7 @@ The response includes the equation, variables, and calculated result. Missing va
 
 For the example equation and values above, the result is `11` (`3*2 + 2*3 - 1`).
 
-Supports `+`, `-`, `^`, parentheses, integer constants, variables, unary minus, and implicit multiplication such as `3x` and `2(x + 1)`. Exponentiation is right-associative and binds more tightly than unary minus. Explicit `*` and `/` operators are not part of the assignment's supported equation syntax.
+Supports `+`, `-`, `*`, `/`, `^`, parentheses, decimal and integer constants, variables, unary minus, and implicit multiplication such as `3x` and `2(x + 1)`. Equations are converted to postfix notation and then built into an expression tree. Exponentiation is right-associative and binds more tightly than unary minus. Division by zero or any other non-finite result returns HTTP `400`.
 
 ## Tests
 

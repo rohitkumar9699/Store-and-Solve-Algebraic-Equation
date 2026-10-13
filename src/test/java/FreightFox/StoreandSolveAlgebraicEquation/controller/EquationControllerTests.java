@@ -38,7 +38,27 @@ class EquationControllerTests {
 				.content("{\"variables\":{\"x\":2,\"y\":3,\"z\":1}}"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.equationId").value("1"))
+			.andExpect(jsonPath("$.equation").value("3 * x + 2 * y - z"))
+			.andExpect(jsonPath("$.variables.x").value(2))
 			.andExpect(jsonPath("$.result").value(11.0));
+
+		mockMvc.perform(post("/api/equations/1/evaluate")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"variables\":{}}"))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").exists());
+
+		mockMvc.perform(post("/api/equations/store")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"equation\":\"1 / 0\"}"))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.equationId").value("2"));
+
+		mockMvc.perform(post("/api/equations/2/evaluate")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"variables\":{}}"))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").exists());
 	}
 
 	@Test

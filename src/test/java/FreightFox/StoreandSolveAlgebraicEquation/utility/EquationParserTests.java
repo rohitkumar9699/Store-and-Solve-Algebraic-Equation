@@ -39,20 +39,34 @@ class EquationParserTests {
 	}
 
 	@Test
+	void evaluatesExplicitMultiplicationAndDivision() {
+		ExpressionTree tree = EquationParser.parse("x * 3 / 2");
+
+		assertEquals(6.0, tree.evaluate(Map.of("x", 4.0)));
+		assertEquals("x * 3 / 2", tree.toInfix());
+	}
+
+	@Test
+	void preservesParenthesesNeededForOperatorOrder() {
+		ExpressionTree tree = EquationParser.parse("x - (y + 1)");
+
+		assertEquals("x - (y + 1)", tree.toInfix());
+		assertEquals(-2.0, tree.evaluate(Map.of("x", 2.0, "y", 3.0)));
+	}
+
+	@Test
 	void rejectsMalformedExpressions() {
 		assertThrows(IllegalArgumentException.class, () -> EquationParser.parse("x + * 2"));
 		assertThrows(IllegalArgumentException.class, () -> EquationParser.parse("x + (2"));
 		assertThrows(IllegalArgumentException.class, () -> EquationParser.parse("2 3"));
 		assertThrows(IllegalArgumentException.class, () -> EquationParser.parse("x & y"));
+		assertThrows(IllegalArgumentException.class, () -> EquationParser.parse("x /"));
 	}
 
 	@Test
-	void reportsMissingVariablesAndUnsupportedOperators() {
+	void reportsMissingVariablesAndUnsupportedCharacters() {
 		assertThrows(IllegalArgumentException.class,
 				() -> EquationParser.parse("x + 1").evaluate(Map.of()));
-		assertThrows(IllegalArgumentException.class,
-				() -> EquationParser.parse("x / 2"));
-		assertThrows(IllegalArgumentException.class,
-				() -> EquationParser.parse("x * 2"));
+		assertThrows(IllegalArgumentException.class, () -> EquationParser.parse("x % 2"));
 	}
 }
