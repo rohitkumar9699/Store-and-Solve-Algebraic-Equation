@@ -2,9 +2,11 @@ package FreightFox.StoreandSolveAlgebraicEquation.utility;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public final class EquationParser {
 
+	private static final Pattern NUMBER = Pattern.compile("(?:\\d+(?:\\.\\d*)?|\\.\\d+)");
 	private final List<String> tokens;
 	private int position;
 
@@ -21,9 +23,7 @@ public final class EquationParser {
 		if (parser.position != parser.tokens.size()) {
 			throw parser.syntaxError();
 		}
-		List<String> postfix = new ArrayList<>();
-		toPostfix(root, postfix);
-		return ExpressionTree.fromPostfix(postfix);
+		return ExpressionTree.fromRoot(root);
 	}
 
 	private ExpressionNode parseExpression() {
@@ -94,18 +94,6 @@ public final class EquationParser {
 				+ (position < tokens.size() ? "'" + tokens.get(position) + "'" : "at end") + ".");
 	}
 
-	private static void toPostfix(ExpressionNode node, List<String> postfix) {
-		if (node.isLeaf()) {
-			postfix.add(node.token());
-			return;
-		}
-		toPostfix(node.left(), postfix);
-		if (node.right() != null) {
-			toPostfix(node.right(), postfix);
-		}
-		postfix.add(node.token());
-	}
-
 	private static List<String> tokenize(String equation) {
 		List<String> rawTokens = new ArrayList<>();
 		for (int i = 0; i < equation.length();) {
@@ -170,8 +158,8 @@ public final class EquationParser {
 		return isNumber(token) || isIdentifier(token) || token.equals("(");
 	}
 
-	private static boolean isNumber(String token) {
-		return token.matches("\\d+");
+	static boolean isNumber(String token) {
+		return NUMBER.matcher(token).matches();
 	}
 
 	private static boolean isIdentifier(String token) {

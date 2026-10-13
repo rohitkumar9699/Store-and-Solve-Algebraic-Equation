@@ -18,6 +18,13 @@ class EquationParserTests {
 	}
 
 	@Test
+	void parsesAndEvaluatesDecimalNumbers() {
+		ExpressionTree tree = EquationParser.parse(".5x + 1.5");
+
+		assertEquals(2.5, tree.evaluate(Map.of("x", 2.0)));
+	}
+
+	@Test
 	void respectsParenthesesAndExponentPrecedence() {
 		ExpressionTree tree = EquationParser.parse("-(x + 1)^2 + 2^3^2");
 

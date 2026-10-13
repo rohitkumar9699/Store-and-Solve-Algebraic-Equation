@@ -2,42 +2,18 @@ package FreightFox.StoreandSolveAlgebraicEquation.utility;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public final class ExpressionTree {
 
-	private static final Pattern NUMBER = Pattern.compile("\\d+");
 	private final ExpressionNode root;
 
 	private ExpressionTree(ExpressionNode root) {
 		this.root = root;
 	}
 
-	static ExpressionTree fromPostfix(List<String> postfix) {
-		Deque<ExpressionNode> nodes = new ArrayDeque<>();
-		for (String token : postfix) {
-			if (isUnaryOperator(token)) {
-				if (nodes.isEmpty()) {
-					throw new IllegalArgumentException("Invalid expression.");
-				}
-				nodes.push(new ExpressionNode(token, nodes.pop(), null));
-			} else if (isBinaryOperator(token)) {
-				if (nodes.size() < 2) {
-					throw new IllegalArgumentException("Invalid expression.");
-				}
-				ExpressionNode right = nodes.pop();
-				ExpressionNode left = nodes.pop();
-				nodes.push(new ExpressionNode(token, left, right));
-			} else {
-				nodes.push(new ExpressionNode(token, null, null));
-			}
-		}
-		if (nodes.size() != 1) {
-			throw new IllegalArgumentException("Invalid expression.");
-		}
-		return new ExpressionTree(nodes.pop());
+	static ExpressionTree fromRoot(ExpressionNode root) {
+		return new ExpressionTree(root);
 	}
 
 	public String toInfix() {
@@ -76,7 +52,7 @@ public final class ExpressionTree {
 
 	private static double evaluate(ExpressionNode node, Map<String, Double> variables) {
 		if (node.isLeaf()) {
-			if (NUMBER.matcher(node.token()).matches()) {
+			if (EquationParser.isNumber(node.token())) {
 				return Double.parseDouble(node.token());
 			}
 			Double value = variables.get(node.token());
@@ -105,11 +81,6 @@ public final class ExpressionTree {
 
 	private static boolean isUnaryOperator(String token) {
 		return token.equals("u-");
-	}
-
-	private static boolean isBinaryOperator(String token) {
-		return token.equals("+") || token.equals("-") || token.equals("*")
-				|| token.equals("^");
 	}
 
 	private static int precedence(String operator) {
